@@ -41,6 +41,9 @@ setup(
         'wandb',
         'webdataset',
         'x-transformers',
+        'torchcodec',
+        'omegaconf',
+        'timm',
     ],
 
 )
