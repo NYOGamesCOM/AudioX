@@ -542,8 +542,17 @@ class T5Conditioner(Conditioner):
         attention_mask = encoded["attention_mask"].to(device).to(torch.bool)
 
         self.model.eval()
-            
-        with torch.cuda.amp.autocast(dtype=torch.float16), torch.set_grad_enabled(self.enable_grad):
+
+        # Use device-aware autocast: float16 only on CUDA, float32 on MPS/CPU
+        device_str = str(device)
+        if "cuda" in device_str:
+            autocast_ctx = torch.amp.autocast("cuda", dtype=torch.float16)
+        else:
+            # MPS and CPU don't support float16 autocast; run in float32
+            import contextlib
+            autocast_ctx = contextlib.nullcontext()
+
+        with autocast_ctx, torch.set_grad_enabled(self.enable_grad):
             embeddings = self.model(
                 input_ids=input_ids, attention_mask=attention_mask
             )["last_hidden_state"]    
