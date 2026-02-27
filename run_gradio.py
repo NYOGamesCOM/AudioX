@@ -34,7 +34,7 @@ def download_file(url, output_path):
     print(f"Downloading {url} to {output_path}...")
     try:
         result = subprocess.run(
-            ["wget", url, "-O", output_path],
+            ["curl", "-L", url, "-o", output_path],
             check=True,
             capture_output=True,
             text=True
@@ -47,7 +47,7 @@ def download_file(url, output_path):
         print(f"stderr: {e.stderr}")
         return False
     except FileNotFoundError:
-        print("Error: wget not found. Please install wget or download the files manually.")
+        print("Error: curl not found. Please install curl or download the files manually.")
         return False
 
 def setup_model(model_name):

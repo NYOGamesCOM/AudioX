@@ -170,6 +170,7 @@ wandb/*
 
 
 model/
+.gradio/
 logs/
 log/
 saved_ckpt/
