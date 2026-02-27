@@ -16,6 +16,7 @@ from torch.nn import functional as F
 from pytorch_lightning.utilities.rank_zero import rank_zero_only
 
 from ..inference.sampling import get_alphas_sigmas, sample, sample_discrete_euler
+from ..inference.mps_fix import get_autocast_context
 from ..models.diffusion import DiffusionModelWrapper, ConditionedDiffusionModelWrapper
 from ..models.autoencoders import DiffusionAutoencoder
 from ..models.diffusion_prior import PriorType
@@ -133,7 +134,7 @@ class DiffusionUncondTrainingWrapper(pl.LightningModule):
         noised_inputs = diffusion_input * alphas + noise * sigmas
         targets = noise * alphas - diffusion_input * sigmas
 
-        with torch.cuda.amp.autocast():
+        with get_autocast_context():
             v = self.diffusion(noised_inputs, t)
 
             loss_info.update({
@@ -198,7 +199,7 @@ class DiffusionUncondDemoCallback(pl.Callback):
         noise = torch.randn([self.num_demos, module.diffusion.io_channels, demo_samples]).to(module.device)
 
         try:
-            with torch.cuda.amp.autocast():
+            with get_autocast_context():
                 fakes = sample(module.diffusion_ema, noise, self.demo_steps, 0)
 
                 if module.diffusion.pretransform is not None:
@@ -381,10 +382,10 @@ class DiffusionCondTrainingWrapper(pl.LightningModule):
             self.diffusion.pretransform.to(self.device)
 
             if not self.pre_encoded:
-                with torch.cuda.amp.autocast() and torch.set_grad_enabled(self.diffusion.pretransform.enable_grad):
+                with get_autocast_context() and torch.set_grad_enabled(self.diffusion.pretransform.enable_grad):
                     self.diffusion.pretransform.train(self.diffusion.pretransform.enable_grad)
                     self.diffusion.pretransform = self.diffusion.pretransform.to(dtype=torch.float32).eval()
-                    with torch.cuda.amp.autocast(enabled=False):
+                    with get_autocast_context():
                         diffusion_input = self.diffusion.pretransform.encode(diffusion_input.to(dtype=torch.float32))
                     p.tick("pretransform")
 
@@ -582,7 +583,7 @@ class DiffusionCondTrainingWrapper(pl.LightningModule):
         if use_padding_mask:
             extra_args["mask"] = padding_masks
 
-        with torch.cuda.amp.autocast():
+        with get_autocast_context():
             p.tick("amp")
             
             output = self.diffusion(noised_inputs, t, cond=conditioning, cfg_dropout_prob = self.cfg_dropout_prob, **extra_args)

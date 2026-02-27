@@ -3,6 +3,7 @@ import math
 from tqdm import trange, tqdm
 
 import k_diffusion as K
+from .mps_fix import get_autocast_context
     
 # Define the noise schedule and sampling loop
 def get_alphas_sigmas(t):
@@ -58,7 +59,7 @@ def sample(model, x, steps, eta, **extra_args):
     for i in trange(steps):
 
         # Get the model output (v, the predicted velocity)
-        with torch.cuda.amp.autocast():
+        with get_autocast_context():
             v = model(x, ts * t[i], **extra_args).float()
 
         # Predict the noise and the denoised image
@@ -181,7 +182,7 @@ def sample_k(
         x = noise
     # x = noise
 
-    with torch.cuda.amp.autocast():
+    with get_autocast_context():
         if sampler_type == "k-heun":
             return K.sampling.sample_heun(denoiser, x, sigmas, disable=False, callback=wrapped_callback, extra_args=extra_args)
         elif sampler_type == "k-lms":
@@ -233,7 +234,7 @@ def sample_rf(
         # set the initial latent to noise
         x = noise
 
-    with torch.cuda.amp.autocast():
+    with get_autocast_context():
         # TODO: Add callback support
         #return sample_discrete_euler(model_fn, x, steps, sigma_max, callback=wrapped_callback, **extra_args)
         return sample_discrete_euler(model_fn, x, steps, sigma_max, **extra_args)

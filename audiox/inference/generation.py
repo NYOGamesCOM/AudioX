@@ -6,6 +6,7 @@ from torchaudio import transforms as T
 
 from .utils import prepare_audio
 from .sampling import sample, sample_k, sample_rf
+from .mps_fix import get_autocast_context
 from ..data.utils import PadCrop
 
 torch.backends.cudnn.benchmark = False
@@ -253,7 +254,7 @@ def generate_diffusion_cond(
         sampled = sampled.to(next(model.pretransform.parameters()).dtype)
 
         model.pretransform = model.pretransform.to(dtype=torch.float32).eval()
-        with torch.cuda.amp.autocast(enabled=False):        
+        with get_autocast_context():
             sampled = model.pretransform.decode(sampled.to(dtype=torch.float32))
 
     # Return audio

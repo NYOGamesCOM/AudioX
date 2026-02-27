@@ -548,9 +548,13 @@ def create_sampling_ui(model_options, model_config_map, inpainting=False):
     with gr.Blocks() as demo:
         gr.Markdown(
             """
-            # 🎧AudioX: A Unified Framework for Anything-to-Audio Generation
             **[Project Page](https://zeyuet.github.io/AudioX/) · [Huggingface](https://huggingface.co/Zeyue7/AudioX) · [GitHub](https://github.com/ZeyueT/AudioX)**
-            """
+            
+            *Running on:* **{device}**
+            
+            > [!TIP]
+            > **Mac Users:** For best results, use the **k-heun** sampler and keep **CFG Scale** between **3.0 - 5.0** to avoid numerical artifacts.
+            """.format(device=device)
         )
 
         with gr.Row():
